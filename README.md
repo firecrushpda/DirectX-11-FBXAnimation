@@ -31,3 +31,4 @@ the model i used for this test is made in the guide of youtube channel :
 
 it is a japanese blender tutorial whitch contain model making and animation making
  
+the sample does not contain the material parse i will do it later
