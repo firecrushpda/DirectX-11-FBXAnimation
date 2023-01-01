@@ -3,6 +3,7 @@
 #include "BitFlag.h"
 #include "FBXDefine.h"
 #include "ErrorLogger.h"
+#include <vector>
 
 class FBXModel
 {
@@ -14,6 +15,9 @@ public:
 	const FBXControlPointGroup* GetControlPointGroup() const;
 	const FBXBoneGroup* GetBoneGroup() const;
 	const FBXModelAnimation* GetAnimation() const;
+
+	unsigned int m_kcurrentAnimaionIndex = 0;
+
 	//
 	const FBXMeshData* GetAnimationMeshData(float fTime);
 	//目前模型中只有一个动画。获取动画中有多少个关键帧。
@@ -46,7 +50,7 @@ public:
 	void LoadSingleBoneMatrixFromBoneSpaceToWorldSpace(FbxNode* pNode, FbxMesh* pMesh, FbxNode* pRootNode, FBXBoneGroup* pBoneGroup);
 	void FindBoneByIndexAndName(FbxNode* pNode, int nBoneIndex, const char* szBoneName, FbxNode** ppResultNode, int* pAccBoneCount);
 	void ConvertFbxAMatrixToDirectXMatrix(const FbxAMatrix* pFbxAMatrix, XMMATRIX* pSoMatrix);
-	void ParseAllBoneAnimationData(FbxScene* pSDKScene, FBXBoneGroup* pBoneGroup, FBXModelAnimation* pModelAnim);
+	void ParseAllBoneAnimationData(FbxScene* pSDKScene, FBXBoneGroup* pBoneGroup);//, FBXModelAnimation* pModelAnim
 
 protected:
 	FBXMeshData* GetMeshData_Modify();
@@ -61,5 +65,8 @@ private:
 	FBXMeshData m_kMeshData;
 	FBXControlPointGroup m_kControlPointGroup;
 	FBXBoneGroup m_kBoneGroup;
-	FBXModelAnimation m_kAnimation;
+	//FBXModelAnimation m_kAnimation;
+	std::vector<FBXModelAnimation*> m_kAnimations;
+
+	
 };

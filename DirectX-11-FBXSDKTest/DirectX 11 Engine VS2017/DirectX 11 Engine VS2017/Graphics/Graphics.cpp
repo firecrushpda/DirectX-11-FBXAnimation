@@ -80,8 +80,9 @@ void Graphics::RenderFrame(float dt)
 		//this->deviceContext->RSSetState(this->rasterizerState.Get());
 		//this->deviceContext->DrawIndexed(indicesBuffer.BufferSize(), 0, 0);
 	}
+	
 	model->SetTexture(this->pavementTexture.Get());
-	model->Draw(camera.GetViewMatrix() * camera.GetProjectionMatrix(), dt);
+	model->Draw(camera.GetViewMatrix() * camera.GetProjectionMatrix());
 
 	//Draw Text
 	/*static int fpsCounter = 0;

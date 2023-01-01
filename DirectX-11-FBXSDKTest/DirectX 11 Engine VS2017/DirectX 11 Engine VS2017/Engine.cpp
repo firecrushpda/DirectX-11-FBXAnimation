@@ -20,8 +20,6 @@ bool Engine::ProcessMessages()
 
 void Engine::Update(float dt)
 {
-	//float dt = timer.GetMilisecondsElapsed();
-	//timer.Restart();*/
 
 	while (!keyboard.CharBufferIsEmpty())
 	{
@@ -76,8 +74,8 @@ void Engine::Update(float dt)
 	{
 		this->gfx.camera.AdjustPosition(0.0f, -cameraSpeed * dt, 0.0f);
 	}
-
-
+	//gfx.model->GetFBXModel()->m_kcurrentAnimaionIndex = 0;
+	gfx.model->Update(dt);
 
 }
 

@@ -12,7 +12,8 @@ public:
 	};
 	bool Initialize(const std::string & filePath, ID3D11Device * device, ID3D11DeviceContext * deviceContext, ID3D11ShaderResourceView * texture, ConstantBuffer<CB_VS_vertexshader> & cb_vs_vertexshader);
 	void SetTexture(ID3D11ShaderResourceView * texture);
-	void Draw(const XMMATRIX & viewProjectionMatrix, float fDeltaTime);
+	void Draw(const XMMATRIX & viewProjectionMatrix);
+	void Update(float fDeltaTime);
 
 	const XMVECTOR & GetPositionVector() const;
 	const XMFLOAT3 & GetPositionFloat3() const;
@@ -44,10 +45,7 @@ public:
 	Microsoft::WRL::ComPtr<ID3D11Buffer> indexbuffer;
 private:
 
-	
-
 	FBXModel* fbxmodel = NULL;
-	bool LoadModel(const std::string & filePath);
 	void UpdateWorldMatrix();
 
 	ID3D11Device * device = nullptr;

@@ -27,17 +27,20 @@ const FBXBoneGroup* FBXModel::GetBoneGroup() const
 
 const FBXModelAnimation* FBXModel::GetAnimation() const
 {
-	return &m_kAnimation;
+	auto m_kAnimation = m_kAnimations.at(m_kcurrentAnimaionIndex);
+	return m_kAnimation;
 }
 
 int FBXModel::GetKeyFrameCount() const
 {
-	return m_kAnimation.nFrameCount;
+	auto m_kAnimation = m_kAnimations.at(m_kcurrentAnimaionIndex);
+	return m_kAnimation->nFrameCount;
 }
 
 float FBXModel::GetAnimTimeLength()
 {
-	return m_kAnimation.fAnimLength;
+	auto m_kAnimation = m_kAnimations.at(m_kcurrentAnimaionIndex);
+	return m_kAnimation->fAnimLength;
 }
 
 void FBXModel::CalculateMeshBoundingBox(XMFLOAT3* pMinPos, XMFLOAT3* pMaxPos)
@@ -96,15 +99,16 @@ void FBXModel::CalculateMeshBoundingBox(XMFLOAT3* pMinPos, XMFLOAT3* pMaxPos)
 
 const FBXMeshData* FBXModel::GetAnimationMeshData(float fTime)
 {
-	float fYuShu = fTime / m_kAnimation.fAnimLength;
+	auto m_kAnimation = m_kAnimations.at(m_kcurrentAnimaionIndex);
+	float fYuShu = fTime / m_kAnimation->fAnimLength;
 	fYuShu = fYuShu - floor(fYuShu);
-	float curTime = m_kAnimation.fAnimLength * fYuShu;
+	float curTime = m_kAnimation->fAnimLength * fYuShu;
 	if (curTime < 0.0f)
 	{
 		curTime = 0.0f;
 	}
 
-	int nCurKeyFrameIndex = m_kAnimation.GetKeyFrameIndexByTime(curTime);
+	int nCurKeyFrameIndex = m_kAnimation->GetKeyFrameIndexByTime(curTime);
 	if (nCurKeyFrameIndex != -1)
 	{
 		CalculateMeshDataByKeyFrame(nCurKeyFrameIndex);
@@ -125,7 +129,8 @@ FBXBoneGroup* FBXModel::GetBoneGroup_Modify()
 
 FBXModelAnimation* FBXModel::GetAnimation_Modify()
 {
-	return &m_kAnimation;
+	auto m_kAnimation = m_kAnimations.at(m_kcurrentAnimaionIndex);
+	return m_kAnimation;
 }
 
 FBXMeshData* FBXModel::GetMeshData_Modify()
@@ -169,7 +174,8 @@ void FBXModel::CalculateMeshDataByKeyFrame(const int nKeyFrameIndex)
 			{
 				continue;
 			}
-			FBXBoneAnimation* pBoneAnim = m_kAnimation.GetBoneAnimation(nBoneIndex);
+			auto m_kAnimation = m_kAnimations.at(m_kcurrentAnimaionIndex);
+			FBXBoneAnimation* pBoneAnim = m_kAnimation->GetBoneAnimation(nBoneIndex);
 			if (pBoneAnim == NULL)
 			{
 				continue;
@@ -234,44 +240,6 @@ void FBXModel::CreateFBXStatus(const char* szFileName, FBXModel* pFBXModel) {
 	{
 		FBXSDK_printf("\n\nAn error occurred while loading the scene...");
 	}
-	else
-	{
-		// Display the scene.
-		/*DisplayMetaData(lScene);
-
-		FBXSDK_printf("\n\n---------------------\nGlobal Light Settings\n---------------------\n\n");
-
-		if( gVerbose ) DisplayGlobalLightSettings(&lScene->GetGlobalSettings());
-
-		FBXSDK_printf("\n\n----------------------\nGlobal Camera Settings\n----------------------\n\n");
-
-		if( gVerbose ) DisplayGlobalCameraSettings(&lScene->GetGlobalSettings());
-
-		FBXSDK_printf("\n\n--------------------\nGlobal Time Settings\n--------------------\n\n");
-
-		if( gVerbose ) DisplayGlobalTimeSettings(&lScene->GetGlobalSettings());*/
-
-		/*  FBXSDK_printf("\n\n---------\nHierarchy\n---------\n\n");
-
-		  if( gVerbose ) DisplayHierarchy(lScene);*/
-
-		  /*FBXSDK_printf("\n\n------------\nNode Content\n------------\n\n");
-
-		  if( gVerbose ) DisplayContent(lScene);*/
-
-		  //FBXSDK_printf("\n\n----\nPose\n----\n\n");
-
-		  //if( gVerbose ) DisplayPose(lScene);
-
-		//FBXSDK_printf("\n\n---------\nAnimation\n---------\n\n");
-
-		//DisplayAnimation(lScene);
-
-		////now display generic information
-
-		//FBXSDK_printf("\n\n---------\nGeneric Information\n---------\n\n");
-		//if( gVerbose ) DisplayGenericInfo(lScene);
-	}
 
 	//convert scene AxisSystem
 	FbxAxisSystem OurAxisSystem(FbxAxisSystem::eMax);
@@ -301,7 +269,7 @@ void FBXModel::CreateFBXStatus(const char* szFileName, FBXModel* pFBXModel) {
 	FBXMeshData* pMeshData = pFBXModel->GetMeshData_Modify();
 	FBXControlPointGroup* pControlPointGroup = pFBXModel->GetControlPointGroup_Modify();
 	FBXBoneGroup* pBoneGroup = pFBXModel->GetBoneGroup_Modify();
-	FBXModelAnimation* pModelAnimation = pFBXModel->GetAnimation_Modify();
+	//FBXModelAnimation* pModelAnimation = pFBXModel->GetAnimation_Modify();
 
 
 	BitFlag kVertexType;
@@ -367,8 +335,8 @@ void FBXModel::CreateFBXStatus(const char* szFileName, FBXModel* pFBXModel) {
 	int nTheBoneCount = pBoneGroup->GetSize();
 	if (nTheBoneCount > 0)
 	{
-		pModelAnimation->ReserveBoneCount(nTheBoneCount);
-		ParseAllBoneAnimationData(lScene, pBoneGroup, pModelAnimation);
+		//pModelAnimation->ReserveBoneCount(nTheBoneCount);
+		ParseAllBoneAnimationData(lScene, pBoneGroup);//pModelAnimation
 	}
 	//>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 
@@ -1336,53 +1304,103 @@ void FBXModel::ConvertFbxAMatrixToDirectXMatrix(const FbxAMatrix* pFbxAMatrix, X
 	}
 }
 
-void FBXModel::ParseAllBoneAnimationData(FbxScene* pSDKScene, FBXBoneGroup* pBoneGroup, FBXModelAnimation* pModelAnim)
+void FBXModel::ParseAllBoneAnimationData(FbxScene* pSDKScene, FBXBoneGroup* pBoneGroup)//, FBXModelAnimation* pModelAnim
 {
 	//一般情况下，一个fbx文件中只包含一个动画，也即只包含一个FbxAnimStack对象。
 	//把0号FbxAnimStack对象设置为当前要播放（提取）的动画。
-	FbxAnimStack* pAnimStack = pSDKScene->GetSrcObject<FbxAnimStack>(1);//
-	if (pAnimStack == NULL)
+	auto pAnimStackCount = pSDKScene->GetSrcObjectCount<FbxAnimStack>();
+	for (int i = 0; i < pAnimStackCount; ++i)
 	{
-		ErrorLogger::Log("StFBXManager::ParseAllBoneAnimationData : no FbxAnimStack found");
-		return;
-	}
-	pSDKScene->SetCurrentAnimationStack(pAnimStack);
-
-
-	const FbxTime::EMode theTimeMode = FbxTime::eFrames24;
-	FbxTimeSpan kTimeSpan = pAnimStack->GetLocalTimeSpan();
-	FbxTime kAnimDuration = kTimeSpan.GetDuration();
-	const float fAnimLength = (float)kAnimDuration.GetSecondDouble();
-	const int nFrameCount = (int)kAnimDuration.GetFrameCount(theTimeMode);
-	const int nBoneCount = pBoneGroup->GetSize();
-	pModelAnim->nFrameCount = nFrameCount;
-	pModelAnim->fAnimLength = fAnimLength;
-
-	for (int boneIndex = 0; boneIndex < nBoneCount; ++boneIndex)
-	{
-		const char* szBoneName = pBoneGroup->GetAt(boneIndex)->kBoneName.c_str();
-		FbxNode* pBoneNode = NULL;
-		int nAccBoneCount = 0;
-		FindBoneByIndexAndName(pSDKScene->GetRootNode(), boneIndex, szBoneName, &pBoneNode, &nAccBoneCount);
-		if (pBoneNode == NULL)
+		FBXModelAnimation* mNewAnimation = new FBXModelAnimation();
+		mNewAnimation->ReserveBoneCount(pBoneGroup->GetSize());
+		FbxAnimStack* pAnimStack = pSDKScene->GetSrcObject<FbxAnimStack>(i);//
+		if (pAnimStack == NULL)
 		{
-			ErrorLogger::Log("StFBXManager::ParseAllBoneAnimationData : Can not find Bone ");
-			continue;
+			ErrorLogger::Log("StFBXManager::ParseAllBoneAnimationData : no FbxAnimStack found");
+			return;
 		}
+		pSDKScene->SetCurrentAnimationStack(pAnimStack);
 
-		FBXBoneAnimation* pBoneAnim = pModelAnim->TakeNew();
-		pBoneAnim->ReserveKeyFrameCount(nFrameCount);
-		pBoneAnim->nBoneIndex = boneIndex;
-		FbxTime kTime;
-		for (int frameIndex = 0; frameIndex < nFrameCount; ++frameIndex)
+		const FbxTime::EMode theTimeMode = FbxTime::eFrames24;
+		FbxTimeSpan kTimeSpan = pAnimStack->GetLocalTimeSpan();
+		FbxTime kAnimDuration = kTimeSpan.GetDuration();
+		const float fAnimLength = (float)kAnimDuration.GetSecondDouble();
+		const int nFrameCount = (int)kAnimDuration.GetFrameCount(theTimeMode);
+		const int nBoneCount = pBoneGroup->GetSize();
+		mNewAnimation->nFrameCount = nFrameCount;
+		mNewAnimation->fAnimLength = fAnimLength;
+
+		for (int boneIndex = 0; boneIndex < nBoneCount; ++boneIndex)
 		{
-			FBXKeyFrame* pKeyFrame = pBoneAnim->TakeNew();
-			kTime.SetFrame(frameIndex, theTimeMode);
-			pKeyFrame->fKeyTime = (float)kTime.GetSecondDouble();
-			const FbxAMatrix& kGlobalTran = pBoneNode->EvaluateGlobalTransform(kTime);
-			ConvertFbxAMatrixToDirectXMatrix(&kGlobalTran, &(pKeyFrame->matKeyTransform));
+			const char* szBoneName = pBoneGroup->GetAt(boneIndex)->kBoneName.c_str();
+			FbxNode* pBoneNode = NULL;
+			int nAccBoneCount = 0;
+			FindBoneByIndexAndName(pSDKScene->GetRootNode(), boneIndex, szBoneName, &pBoneNode, &nAccBoneCount);
+			if (pBoneNode == NULL)
+			{
+				ErrorLogger::Log("StFBXManager::ParseAllBoneAnimationData : Can not find Bone ");
+				continue;
+			}
+
+			FBXBoneAnimation* pBoneAnim = mNewAnimation->TakeNew();
+			pBoneAnim->ReserveKeyFrameCount(nFrameCount);
+			pBoneAnim->nBoneIndex = boneIndex;
+			FbxTime kTime;
+			for (int frameIndex = 0; frameIndex < nFrameCount; ++frameIndex)
+			{
+				FBXKeyFrame* pKeyFrame = pBoneAnim->TakeNew();
+				kTime.SetFrame(frameIndex, theTimeMode);
+				pKeyFrame->fKeyTime = (float)kTime.GetSecondDouble();
+				const FbxAMatrix& kGlobalTran = pBoneNode->EvaluateGlobalTransform(kTime);
+				ConvertFbxAMatrixToDirectXMatrix(&kGlobalTran, &(pKeyFrame->matKeyTransform));
+			}
 		}
+		m_kAnimations.push_back(mNewAnimation);
+		m_kcurrentAnimaionIndex = i;
 	}
+
+	//FbxAnimStack* pAnimStack = pSDKScene->GetSrcObject<FbxAnimStack>(1);//
+	//if (pAnimStack == NULL)
+	//{
+	//	ErrorLogger::Log("StFBXManager::ParseAllBoneAnimationData : no FbxAnimStack found");
+	//	return;
+	//}
+	//pSDKScene->SetCurrentAnimationStack(pAnimStack);
+
+	//const FbxTime::EMode theTimeMode = FbxTime::eFrames24;
+	//FbxTimeSpan kTimeSpan = pAnimStack->GetLocalTimeSpan();
+	//FbxTime kAnimDuration = kTimeSpan.GetDuration();
+	//const float fAnimLength = (float)kAnimDuration.GetSecondDouble();
+	//const int nFrameCount = (int)kAnimDuration.GetFrameCount(theTimeMode);
+	//const int nBoneCount = pBoneGroup->GetSize();
+	//pModelAnim->nFrameCount = nFrameCount;
+	//pModelAnim->fAnimLength = fAnimLength;
+
+	//for (int boneIndex = 0; boneIndex < nBoneCount; ++boneIndex)
+	//{
+	//	const char* szBoneName = pBoneGroup->GetAt(boneIndex)->kBoneName.c_str();
+	//	FbxNode* pBoneNode = NULL;
+	//	int nAccBoneCount = 0;
+	//	FindBoneByIndexAndName(pSDKScene->GetRootNode(), boneIndex, szBoneName, &pBoneNode, &nAccBoneCount);
+	//	if (pBoneNode == NULL)
+	//	{
+	//		ErrorLogger::Log("StFBXManager::ParseAllBoneAnimationData : Can not find Bone ");
+	//		continue;
+	//	}
+
+	//	FBXBoneAnimation* pBoneAnim = pModelAnim->TakeNew();
+	//	pBoneAnim->ReserveKeyFrameCount(nFrameCount);
+	//	pBoneAnim->nBoneIndex = boneIndex;
+	//	FbxTime kTime;
+	//	for (int frameIndex = 0; frameIndex < nFrameCount; ++frameIndex)
+	//	{
+	//		FBXKeyFrame* pKeyFrame = pBoneAnim->TakeNew();
+	//		kTime.SetFrame(frameIndex, theTimeMode);
+	//		pKeyFrame->fKeyTime = (float)kTime.GetSecondDouble();
+	//		const FbxAMatrix& kGlobalTran = pBoneNode->EvaluateGlobalTransform(kTime);
+	//		ConvertFbxAMatrixToDirectXMatrix(&kGlobalTran, &(pKeyFrame->matKeyTransform));
+	//	}
+	//}
 }
 
 void FBXModel::FindBoneByIndexAndName(FbxNode* pNode, int nBoneIndex, const char* szBoneName, FbxNode** ppResultNode, int* pAccBoneCount)

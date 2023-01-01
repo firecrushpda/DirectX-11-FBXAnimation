@@ -72,7 +72,7 @@ void Model::SetTexture(ID3D11ShaderResourceView * texture)
 	this->texture = texture;
 }
 
-void Model::Draw(const XMMATRIX & viewProjectionMatrix,float fDeltaTime)
+void Model::Draw(const XMMATRIX & viewProjectionMatrix)
 {
 	//Update Constant buffer with WVP Matrix
 	this->cb_vs_vertexshader->data.mat = this->transfomrMatirx * this->worldMatrix * viewProjectionMatrix; //Calculate World-View-Projection Matrix 
@@ -82,13 +82,22 @@ void Model::Draw(const XMMATRIX & viewProjectionMatrix,float fDeltaTime)
 
 	this->deviceContext->PSSetShaderResources(0, 1, &this->texture); //Set Texture
 
+	stride = sizeof(Vertex);
+	UINT uiOffset = 0;
+	this->deviceContext->IASetVertexBuffers(0, 1, this->vertexbuffer.GetAddressOf(), &stride, &uiOffset);
+	this->deviceContext->IASetIndexBuffer(this->indexbuffer.Get(), DXGI_FORMAT::DXGI_FORMAT_R32_UINT, 0);
+	this->deviceContext->DrawIndexed(fbxmodel->GetMeshData()->nIndexCount, 0, 0);
+}
+
+void Model::Update(float fDeltaTime) {
+
 	if (fbxmodel->GetKeyFrameCount() > 0)
 	{
-		m_fAccTime += fDeltaTime/500.0f;
+		m_fAccTime += fDeltaTime / 1000.0f;
 		const FBXMeshData* pMeshData = fbxmodel->GetAnimationMeshData(m_fAccTime);
 
 		ID3D11DeviceContext* pD3DDeviceContext = deviceContext;
-		
+
 		////<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 		//把顶点数据从CPU内存拷贝到GPU内存中
 		D3D11_MAPPED_SUBRESOURCE kMappedResource;
@@ -101,69 +110,7 @@ void Model::Draw(const XMMATRIX & viewProjectionMatrix,float fDeltaTime)
 		}
 		//>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 	}
-
-	stride = sizeof(Vertex);
-	UINT uiOffset = 0;
-	this->deviceContext->IASetVertexBuffers(0, 1, this->vertexbuffer.GetAddressOf(), &stride, &uiOffset);
-	this->deviceContext->IASetIndexBuffer(this->indexbuffer.Get(), DXGI_FORMAT::DXGI_FORMAT_R32_UINT, 0);
-	this->deviceContext->DrawIndexed(fbxmodel->GetMeshData()->nIndexCount, 0, 0);
 }
-
-bool Model::LoadModel(const std::string & filePath)
-{
-	
-	return true;
-}
-
-//void Model::ProcessNode(aiNode * node, const aiScene * scene)
-//{
-//	for (UINT i = 0; i < node->mNumMeshes; i++)
-//	{
-//		aiMesh* mesh = scene->mMeshes[node->mMeshes[i]];
-//		meshes.push_back(this->ProcessMesh(mesh, scene));
-//	}
-//
-//	for (UINT i = 0; i < node->mNumChildren; i++)
-//	{
-//		this->ProcessNode(node->mChildren[i], scene);
-//	}
-//}
-
-//Mesh Model::ProcessMesh(aiMesh * mesh, const aiScene * scene)
-//{
-//	// Data to fill
-//	std::vector<Vertex> vertices;
-//	std::vector<DWORD> indices;
-//
-//	//Get vertices
-//	for (UINT i = 0; i < mesh->mNumVertices; i++)
-//	{
-//		Vertex vertex;
-//
-//		vertex.pos.x = mesh->mVertices[i].x;
-//		vertex.pos.y = mesh->mVertices[i].y;
-//		vertex.pos.z = mesh->mVertices[i].z;
-//
-//		if (mesh->mTextureCoords[0])
-//		{
-//			vertex.texCoord.x = (float)mesh->mTextureCoords[0][i].x;
-//			vertex.texCoord.y = (float)mesh->mTextureCoords[0][i].y;
-//		}
-//
-//		vertices.push_back(vertex);
-//	}
-//
-//	//Get indices
-//	for (UINT i = 0; i < mesh->mNumFaces; i++)
-//	{
-//		aiFace face = mesh->mFaces[i];
-//
-//		for (UINT j = 0; j < face.mNumIndices; j++)
-//			indices.push_back(face.mIndices[j]);
-//	}
-//
-//	return Mesh(this->device, this->deviceContext, vertices, indices);
-//}
 
 void Model::UpdateWorldMatrix()
 {
